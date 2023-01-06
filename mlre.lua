@@ -1317,6 +1317,49 @@ function send_trig(n)
   end
 end
 
+function map_range(value, in_min, in_max, out_min, out_max)
+  return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+end
+
+-- hardcode midi filter control
+
+-- Define a function to handle MIDI messages
+
+function midi_callback(data)
+  -- Extract the MIDI message and channel
+  local msg = data[1]
+  local channel = data[2]
+  
+  -- Check if the message is a control change message
+  if msg == 176 and channel == 22 then
+    
+    -- Extract the control number and value
+    local control = data[3]
+    local value = data[4]
+
+    --print ("control : ")
+    --print (control)
+
+    -- filter sweeps are only for tracks 3 to 6
+    for i = 3, 6 do 
+      -- Set the value of the cutoff parameter
+      params:set(i.."cutoff", map_range(control, 0, 127, 20, 18000))
+      softcut.post_filter_fc(i, map_range(control, 0, 127, 20, 18000))
+      
+      params:set(i.."filter_q", map_range(control, 127, 0, 0.1, 4))
+      softcut.post_filter_rq(i, map_range(control, 127, 0, 0.1, 4))
+      
+      dirtyscreen = true
+
+    end
+    
+  end
+end
+
+
+-- Set the MIDI callback function
+m.event = midi_callback
+
 -- init
 init = function()
 
@@ -1469,10 +1512,10 @@ init = function()
     params:add_separator("filter_params"..i, "track "..i.." filter")
     -- cutoff
     params:add_control(i.."cutoff", "cutoff", controlspec.new(20, 18000, 'exp', 1, 18000, "Hz"))
-    params:set_action(i.."cutoff", function(x) softcut.post_filter_fc(i, x) if view < vLFO and pageNum == 2 then dirtyscreen = true end end)
+    --params:set_action(i.."cutoff", function(x) softcut.post_filter_fc(i, x) if view < vLFO and pageNum == 2 then dirtyscreen = true end end)
     -- filter q
     params:add_control(i.."filter_q", "filter q", controlspec.new(0.1, 4.0, 'exp', 0.01, 2.0, ""))
-    params:set_action(i.."filter_q", function(x) softcut.post_filter_rq(i, x) if view < vLFO and pageNum == 2 then dirtyscreen = true end end)
+    --params:set_action(i.."filter_q", function(x) softcut.post_filter_rq(i, x) if view < vLFO and pageNum == 2 then dirtyscreen = true end end)
     -- filter type
     params:add_option(i.."filter_type", "type", {"low pass", "high pass", "band pass", "band reject", "off"}, 1)
     params:set_action(i.."filter_type", function() filter_select(i) end)
@@ -1498,6 +1541,11 @@ init = function()
     -- mute
     params:add_binary(i.."track_mute", "mute", "trigger", 0)
     params:set_action(i.."track_mute", function() local n = 1 - track[i].mute e = {} e.t = eMUTE e.i = i e.mute = n event(e) end)
+    
+    --custom mute mapping
+    params:add_binary(i.."mute", i.."mute track", "momentary", 0)
+    params:set_action(i.."mute", function(v) e = {} e.t = eMUTE e.i = i e.mute = 1-v event(e) end)
+    
     -- record enable
     params:add_binary(i.."rec_enable", "record", "trigger", 0)
     params:set_action(i.."rec_enable", function() rec_enable(i) end)
