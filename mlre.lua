@@ -64,7 +64,10 @@ local arc_inc_lfo = 0
 local arc_inc_focus = 0
 local scrub_sens = 100
 local tau = math.pi * 2
-
+local new_pset = {}
+for i = 1, 8 do
+  new_pset[i] = 0
+end
 -- for transpose scales
 local scale_options = {"major", "natural minor", "harmonic minor", "melodic minor", "dorian", "phrygian", "lydian", "mixolydian", "locrian", "custom"}
 
@@ -119,6 +122,7 @@ local div = 16
 local div_options = {"1bar", "1/2", "1/3", "1/4", "1/6", "1/8", "1/16", "1/32"}
 local div_values = {1, 1/2, 1/3, 1/4, 1/6, 1/8, 1/16, 1/32}
 
+
 function event_record(e)
   for i = 1, 8 do
     pattern[i]:watch(e)
@@ -172,6 +176,23 @@ end
 -- exec function
 function event_exec(e)
   if e.t == eCUT then
+    if new_pset[e.i] == 0  then-- if it is the first press on this preset then we must switch buffers
+      
+      local n = 1 - track[e.i].buffer --switch buffer, 0 or 1          
+      
+      print("first press, switching buffer")
+      print("n")
+      print(n)
+      -- e.buffer = n + 1
+
+      
+      --TODO avoid repeating this bit by creating a method
+      track[e.i].buffer = n
+      params:set(e.i.."buffer_sel", track[e.i].buffer)
+      if view == vREC then dirtygrid = true end
+      
+      new_pset[e.i] = 1
+    end
     if track[e.i].loop == 1 then
       track[e.i].loop = 0
       softcut.loop_start(e.i, clip[track[e.i].clip].s)
@@ -1403,6 +1424,7 @@ init = function()
   -- mute
   params:add_binary("track_focus_mute", "mute", "trigger", 0)
   params:set_action("track_focus_mute", function() local i = focus local n = 1 - track[i].mute e = {} e.t = eMUTE e.i = i e.mute = n event(e) end)
+  
   -- record enable
   params:add_binary("rec_focus_enable", "record", "trigger", 0)
   params:set_action("rec_focus_enable", function() rec_enable(focus) end)
@@ -1718,9 +1740,14 @@ init = function()
       io.close(loaded_file)
 
       -- load buffer content
-      --softcut.buffer_clear()
-      softcut.buffer_read_mono(norns.state.data.."sessions/"..number.."/"..pset_id.."_buffer.wav", 0, 0, -1, 1, 1)
+      
+      local new_pset = {} --mark all rows as ready to switch.
+      for i = 1, 8 do
+        new_pset[i] = 0
+      end
 
+      softcut.buffer_read_mono(norns.state.data.."sessions/"..number.."/"..pset_id.."_buffer.wav", 0, 0, -1, 1, 2) --load silent
+    
       -- load sesh data
       sesh_data = tab.load(norns.state.data.."sessions/"..number.."/"..pset_id.."_session.data")
 
@@ -2364,7 +2391,7 @@ v.gridkey[vREC] = function(x, y, z)
           focus = i
           dirtyscreen = true
         end
-        if alt == 1 and alt2 == 0 then
+        if alt == 1 and alt2 == 0 then -- altpress
           track[i].tempo_map = 1 - track[i].tempo_map
           if clip[track[i].clip].file and track[i].tempo_map == 0 then
             clip_reset(i)
@@ -2400,7 +2427,7 @@ v.gridkey[vREC] = function(x, y, z)
         else
           autolength = false
         end
-      elseif x == 16 and alt == 0 and alt2 == 0 then
+      elseif x == 16 and alt == 0 and alt2 == 0 then -- toggle playback
         toggle_playback(i)
       elseif x == 16 and alt == 0 and alt2 == 1 then
         track[i].sel = 1 - track[i].sel
@@ -2794,7 +2821,7 @@ v.arcredraw[vREC] = function()
   a:refresh()
 end
 
----------------------CUT-----------------------
+---------------------  CUT  -----------------------
 
 v.key[vCUT] = v.key[vREC]
 v.enc[vCUT] = v.enc[vREC]
