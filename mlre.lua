@@ -1734,7 +1734,8 @@ init = function()
         track[i].clip = sesh_data[i].track_clip
         set_clip(i, track[i].clip)
         track[i].tempo_map = sesh_data[i].track_tempo_map
-        if track[i].tempo_map == 1 then clip_resize(i) end
+        -- DO NOT resize clip when loading preset, resize when retriggering clip
+        --if track[i].tempo_map == 1 then clip_resize(i) end
         track[i].sel = sesh_data[i].track_sel
         track[i].fade = sesh_data[i].track_fade
         track[i].warble = sesh_data[i].track_warble
@@ -2437,6 +2438,7 @@ v.gridkey[vREC] = function(x, y, z)
         event(e)
         if track[i].buffer_load then
           copy_buffer(i, 2, 1)
+          if track[i].tempo_map == 1 then clip_resize(i) end
           track[i].buffer_load = false
         end
       elseif held[y] == 2 then -- second keypress
@@ -2839,6 +2841,7 @@ v.gridkey[vCUT] = function(x, y, z)
         event(e)
         if track[i].buffer_load then
           copy_buffer(i, 2, 1)
+          if track[i].tempo_map == 1 then clip_resize(i) end
           track[i].buffer_load = false
         end
       elseif y < 8 and held[y] == 2 then
@@ -2940,6 +2943,7 @@ v.gridkey[vTRSP] = function(x, y, z)
         event(e)
         if track[i].buffer_load then
           copy_buffer(i, 2, 1)
+          if track[i].tempo_map == 1 then clip_resize(i) end
           track[i].buffer_load = false
         end
 
