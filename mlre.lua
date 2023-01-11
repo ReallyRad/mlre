@@ -1716,12 +1716,12 @@ init = function()
 
       -- load clip data
       for i = 1, 8 do
-        clip[i].name = sesh_data[i].clip_name
-        clip[i].info = sesh_data[i].clip_info
-        clip[i].init_len = sesh_data[i].clip_reset
-        clip[i].e = sesh_data[i].clip_e
-        clip[i].l = sesh_data[i].clip_l
-        clip[i].bpm = sesh_data[i].clip_bpm
+        -- clip[i].name = sesh_data[i].clip_name
+        -- clip[i].info = sesh_data[i].clip_info
+        -- clip[i].init_len = sesh_data[i].clip_reset
+        -- clip[i].e = sesh_data[i].clip_e
+        -- clip[i].l = sesh_data[i].clip_l
+        -- clip[i].bpm = sesh_data[i].clip_bpm
       end
       -- load route data
       for i = 1, 5 do
@@ -1731,35 +1731,35 @@ init = function()
       end
       -- load track data
       for i = 1, 6 do
-        track[i].clip = sesh_data[i].track_clip
-        set_clip(i, track[i].clip)
-        track[i].tempo_map = sesh_data[i].track_tempo_map
-        -- DO NOT resize clip when loading preset, resize when retriggering clip
-        --if track[i].tempo_map == 1 then clip_resize(i) end
-        track[i].sel = sesh_data[i].track_sel
-        track[i].fade = sesh_data[i].track_fade
-        track[i].warble = sesh_data[i].track_warble
-        e = {} e.t = eMUTE e.i = i e.mute = sesh_data[i].track_mute event(e)
-        e = {} e.t = eREV e.i = i e.rev = sesh_data[i].track_rev event(e)
-        e = {} e.t = eSPEED e.i = i e.speed = sesh_data[i].track_speed event(e)
-        if track[i].play == 0 then
-          stop_track(i)
-        end
-        if sesh_data[i].track_loop == 1 then
-          e = {}
-          e.t = eLOOP
-          e.i = i
-          e.loop = 1
-          e.loop_start = sesh_data[i].track_loop_start
-          e.loop_end = sesh_data[i].track_loop_end
-          event(e)
-          enc2_wait = false
-        elseif sesh_data[i].track_loop == 0 then
-          track[i].loop = 0
-          softcut.loop_start(i, clip[track[i].clip].s)
-          softcut.loop_end(i, clip[track[i].clip].e)
-        end
-        set_rec(i)
+        -- track[i].clip = sesh_data[i].track_clip
+        -- set_clip(i, track[i].clip)
+        -- track[i].tempo_map = sesh_data[i].track_tempo_map
+        -- -- DO NOT resize clip when loading preset, resize when retriggering clip
+        -- --if track[i].tempo_map == 1 then clip_resize(i) end
+        -- track[i].sel = sesh_data[i].track_sel
+        -- track[i].fade = sesh_data[i].track_fade
+        -- track[i].warble = sesh_data[i].track_warble
+        -- e = {} e.t = eMUTE e.i = i e.mute = sesh_data[i].track_mute event(e)
+        -- e = {} e.t = eREV e.i = i e.rev = sesh_data[i].track_rev event(e)
+        -- e = {} e.t = eSPEED e.i = i e.speed = sesh_data[i].track_speed event(e)
+        -- if track[i].play == 0 then
+        --   stop_track(i)
+        -- end
+        -- if sesh_data[i].track_loop == 1 then
+        --   e = {}
+        --   e.t = eLOOP
+        --   e.i = i
+        --   e.loop = 1
+        --   e.loop_start = sesh_data[i].track_loop_start
+        --   e.loop_end = sesh_data[i].track_loop_end
+        --   event(e)
+        --   enc2_wait = false
+        -- elseif sesh_data[i].track_loop == 0 then
+        --   track[i].loop = 0
+        --   softcut.loop_start(i, clip[track[i].clip].s)
+        --   softcut.loop_end(i, clip[track[i].clip].e)
+        -- end
+        -- set_rec(i)
       end
       -- load pattern, recall and snapshot data
       for i = 1, 8 do
@@ -1868,6 +1868,47 @@ init = function()
   print("mlre loaded and ready. enjoy!")
 
 end -- end of init
+
+delayed_clip_loading = function(i)
+  --clip loading
+  clip[i].name = sesh_data[i].clip_name
+  clip[i].info = sesh_data[i].clip_info
+  clip[i].init_len = sesh_data[i].clip_reset
+  clip[i].e = sesh_data[i].clip_e
+  clip[i].l = sesh_data[i].clip_l
+  clip[i].bpm = sesh_data[i].clip_bpm
+
+  --track loading
+  track[i].clip = sesh_data[i].track_clip
+  set_clip(i, track[i].clip)
+  track[i].tempo_map = sesh_data[i].track_tempo_map
+  -- DO NOT resize clip when loading preset, resize when retriggering clip
+  --if track[i].tempo_map == 1 then clip_resize(i) end
+  track[i].sel = sesh_data[i].track_sel
+  track[i].fade = sesh_data[i].track_fade
+  track[i].warble = sesh_data[i].track_warble
+  e = {} e.t = eMUTE e.i = i e.mute = sesh_data[i].track_mute event(e)
+  e = {} e.t = eREV e.i = i e.rev = sesh_data[i].track_rev event(e)
+  e = {} e.t = eSPEED e.i = i e.speed = sesh_data[i].track_speed event(e)
+  if track[i].play == 0 then
+    stop_track(i)
+  end
+  if sesh_data[i].track_loop == 1 then
+    e = {}
+    e.t = eLOOP
+    e.i = i
+    e.loop = 1
+    e.loop_start = sesh_data[i].track_loop_start
+    e.loop_end = sesh_data[i].track_loop_end
+    event(e)
+    enc2_wait = false
+  elseif sesh_data[i].track_loop == 0 then
+    track[i].loop = 0
+    softcut.loop_start(i, clip[track[i].clip].s)
+    softcut.loop_end(i, clip[track[i].clip].e)
+  end
+  set_rec(i)
+end
 
 phase = function(n, x)
   -- calc softcut positon
@@ -2438,6 +2479,7 @@ v.gridkey[vREC] = function(x, y, z)
         event(e)
         if track[i].buffer_load then
           copy_buffer(i, 2, 1)
+          delayed_clip_loading(i)
           if track[i].tempo_map == 1 then clip_resize(i) end
           track[i].buffer_load = false
         end
@@ -2841,6 +2883,7 @@ v.gridkey[vCUT] = function(x, y, z)
         event(e)
         if track[i].buffer_load then
           copy_buffer(i, 2, 1)
+          delayed_clip_loading(i)          
           if track[i].tempo_map == 1 then clip_resize(i) end
           track[i].buffer_load = false
         end
@@ -2943,6 +2986,7 @@ v.gridkey[vTRSP] = function(x, y, z)
         event(e)
         if track[i].buffer_load then
           copy_buffer(i, 2, 1)
+          delayed_clip_loading(i)          
           if track[i].tempo_map == 1 then clip_resize(i) end
           track[i].buffer_load = false
         end
