@@ -406,7 +406,7 @@ for i = 1, 6 do
   track[i].speed = 0
   track[i].warble = 0
   track[i].rev = 0
-  track[i].tempo_map = 0
+  track[i].tempo_map = 1
   track[i].trsp = 8
   track[i].transpose = 0
   track[i].fade = 0
@@ -1361,7 +1361,7 @@ init = function()
   params:add_control("rec_threshold", "rec threshold", controlspec.new(-40, 6, 'lin', 0.01, -12, "dB"))
 
   -- tempo map behaviour
-  params:add_option("t_map_mode", "tempo-map mode", {"resize", "repitch"}, 1)
+  params:add_option("t_map_mode", "tempo-map mode", {"resize", "repitch"}, 2)
 
   -- macro params
   params:add_group("macro_params", "macros", 2)
