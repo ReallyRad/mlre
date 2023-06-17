@@ -303,7 +303,7 @@ for i = 1, 8 do -- 8 snapshot slots
   snap[i].data = false
   snap[i].active = false
   snap[i].play = {}
-  snap[i].mute = {}
+  --snap[i].mute = {}
   snap[i].loop = {}
   snap[i].loop_start = {}
   snap[i].loop_end = {}
@@ -313,7 +313,7 @@ for i = 1, 8 do -- 8 snapshot slots
   snap[i].trsp = {}
   for j = 1, 6 do -- 6 tracks
     snap[i].play[j] = 0
-    snap[i].mute[j] = 0
+    --snap[i].mute[j] = 0
     snap[i].loop[j] = 0
     snap[i].loop_start[j] = 1
     snap[i].loop_end[j] = 16
@@ -328,7 +328,7 @@ function save_snapshot(n)
   for i = 1, 6 do
     softcut.query_position(i)
     snap[n].play[i] = track[i].play
-    snap[n].mute[i] = track[i].mute
+    --snap[n].mute[i] = track[i].mute
     snap[n].loop[i] = track[i].loop
     snap[n].loop_start[i] = track[i].loop_start
     snap[n].loop_end[i] = track[i].loop_end
@@ -347,7 +347,7 @@ end
 
 function load_snapshot(n)
   for i = 1, 6 do
-    e = {} e.t = eMUTE e.i = i e.mute = snap[n].mute[i] event(e)
+    --e = {} e.t = eMUTE e.i = i e.mute = snap[n].mute[i] event(e)
     e = {} e.t = eREV e.i = i e.rev = snap[n].rev[i] event(e)
     e = {} e.t = eSPEED e.i = i e.speed = snap[n].speed[i] event(e)
     params:set(e.i.."transpose", snap[n].trsp[i])
@@ -568,6 +568,7 @@ function rec_enable(i) -- toggle recording and trigger chop function
 end
 
 function set_level(n) -- set track volume and mute track
+  print("set level")
   if track[n].mute == 0 and track[n].play == 1 then
     softcut.level(n, track[n].level)
     set_track_route(n)
@@ -1309,20 +1310,22 @@ function map_range(value, in_min, in_max, out_min, out_max)
 end
 
 -- hardcode midi filter control
-
--- Define a function to handle MIDI messages
-
 function midi_callback(data)
   -- Extract the MIDI message and channel
   local msg = data[1]
   local channel = data[2]
   
+  print("msg ", msg)
+  print("channel", channel)
+  local control = data[3]
+  print("control", control)
+  
   -- Check if the message is a control change message
   if msg == 176 and channel == 22 then
-    
     -- Extract the control number and value
     local control = data[3]
-    local value = data[4]
+    
+    print("value", i)
 
     --print ("control : ")
     --print (control)
@@ -1337,10 +1340,20 @@ function midi_callback(data)
       softcut.post_filter_rq(i, map_range(control, 127, 0, 0.1, 4))
       
       dirtyscreen = true
-
     end
-    
   end
+  
+  if msg == 176 and channel < 70 and channel > 63 and control == 127 then
+    track[channel-63].mute = 0
+    set_level(channel-63)
+  end
+  
+  if msg == 176 and channel < 70 and channel > 63 and control == 0 then
+    track[channel-63].mute = 1
+    set_level(channel-63)
+  end
+  
+  
 end
 
 
@@ -1522,16 +1535,32 @@ init = function()
 
     -- track control
     params:add_separator("track_control_params"..i, "track "..i.." control")
+    
     -- playback
     params:add_binary(i.."track_playback", "playback", "trigger", 0)
     params:set_action(i.."track_playback", function() toggle_playback(i) end)
+    
     -- mute
     params:add_binary(i.."track_mute", "mute", "trigger", 0)
-    params:set_action(i.."track_mute", function() local n = 1 - track[i].mute e = {} e.t = eMUTE e.i = i e.mute = n event(e) end)
+    params:set_action(i.."track_mute", function()
+        local n = 1 - track[i].mute
+        e = {}
+        e.t = eMUTE
+        e.i = i
+        e.mute = n event(e)
+      end)
     
     --custom mute mapping
     params:add_binary(i.."mute", i.."mute track", "momentary", 0)
-    params:set_action(i.."mute", function(v) e = {} e.t = eMUTE e.i = i e.mute = 1-v event(e) end)
+    params:set_action(i.."mute", function(v) 
+        --e = {} 
+        --.t = eMUTE
+        --e.i = i
+        --e.mute = 1-v
+        --event(e)
+        --print ("setting track mute ", i)
+        --print ("to", 1-v)
+      end)
     
     -- record enable
     params:add_binary(i.."rec_enable", "record", "trigger", 0)
@@ -1647,7 +1676,7 @@ init = function()
       sesh_data[i].clip_info = clip[i].info
       sesh_data[i].clip_reset = clip[i].init_len
       sesh_data[i].clip_e = clip[i].e
-      sesh_data[i].clip_l = clip[i].l
+      sesh_data[i].clip_l = clip[i].l -- clip length 
       sesh_data[i].clip_bpm = clip[i].bpm
     end
     -- route data
@@ -1660,7 +1689,7 @@ init = function()
       
       sesh_data[i].track_sel = track[i].sel
       sesh_data[i].track_fade = track[i].fade
-      sesh_data[i].track_mute = track[i].mute
+      --sesh_data[i].track_mute = track[i].mute
       sesh_data[i].track_speed = track[i].speed
       sesh_data[i].track_rev = track[i].rev
       sesh_data[i].track_warble = track[i].warble
@@ -1684,7 +1713,7 @@ init = function()
       sesh_data[i].snap_data = snap[i].data
       sesh_data[i].snap_active = snap[i].active
       sesh_data[i].snap_play = snap[i].play
-      sesh_data[i].snap_mute = snap[i].mute
+      --sesh_data[i].snap_mute = snap[i].mute
       sesh_data[i].snap_loop = snap[i].loop
       sesh_data[i].snap_loop_start = snap[i].loop_start
       sesh_data[i].snap_loop_end = snap[i].loop_end
@@ -1704,6 +1733,13 @@ init = function()
       io.input(loaded_file)
       local pset_id = string.sub(io.read(), 4, -1)
       io.close(loaded_file)
+
+     --for i = 1, 6 do
+      --print("after loading track mute ", i)
+      --print("was ", track[i].mute)
+      --track[i].mute = my_track_mutes[i]
+      --print("now", my_track_mutes[i])
+    --end
 
       -- load buffer content
       softcut.buffer_read_mono(norns.state.data.."sessions/"..number.."/"..pset_id.."_buffer.wav", 0, 0, -1, 1, 2)
@@ -1780,7 +1816,7 @@ init = function()
         snap[i].data = sesh_data[i].snap_data
         snap[i].active = sesh_data[i].snap_active
         snap[i].play = {table.unpack(sesh_data[i].snap_play)}
-        snap[i].mute = {table.unpack(sesh_data[i].snap_mute)}
+        --snap[i].mute = {table.unpack(sesh_data[i].snap_mute)}
         snap[i].loop = {table.unpack(sesh_data[i].snap_loop)}
         snap[i].loop_start = {table.unpack(sesh_data[i].snap_loop_start)}
         snap[i].loop_end = {table.unpack(sesh_data[i].snap_loop_end)}
@@ -1793,6 +1829,7 @@ init = function()
       dirtygrid = true
       print("finished reading pset:'"..pset_id.."'")
     end
+   
   end
 
   params.action_delete = function(filename, name, number)
@@ -1875,7 +1912,7 @@ delayed_clip_loading = function(i)
   clip[i].info = sesh_data[i].clip_info
   clip[i].init_len = sesh_data[i].clip_reset
   clip[i].e = sesh_data[i].clip_e
-  clip[i].l = sesh_data[i].clip_l
+  clip[i].l = sesh_data[i].clip_l --clip length
   clip[i].bpm = sesh_data[i].clip_bpm
 
   --track loading
@@ -1887,7 +1924,7 @@ delayed_clip_loading = function(i)
   track[i].sel = sesh_data[i].track_sel
   track[i].fade = sesh_data[i].track_fade
   track[i].warble = sesh_data[i].track_warble
-  e = {} e.t = eMUTE e.i = i e.mute = sesh_data[i].track_mute event(e)
+  --e = {} e.t = eMUTE e.i = i e.mute = sesh_data[i].track_mute event(e)
   e = {} e.t = eREV e.i = i e.rev = sesh_data[i].track_rev event(e)
   e = {} e.t = eSPEED e.i = i e.speed = sesh_data[i].track_speed event(e)
   if track[i].play == 0 then
