@@ -685,7 +685,7 @@ end
 -- for lfos (hnds_mlre)
 local lfo_targets = {"none"}
 for i = 1, 6 do
-  table.insert(lfo_targets, i.."vol")
+  --table.insert(lfo_targets, i.."vol")
   table.insert(lfo_targets, i.."pan")
   table.insert(lfo_targets, i.."dub")
   table.insert(lfo_targets, i.."transpose")
@@ -1004,7 +1004,7 @@ function randomize(i) -- randomize parameters
     params:set(i.."transpose", math.random(1, 15))
   end
   if params:get("rnd_vol") == 2 then
-    params:set(i.."vol", math.random(20, 100) / 100)
+    --params:set(i.."vol", math.random(20, 100) / 100)
   end
   if params:get("rnd_pan") == 2 then
     params:set(i.."pan", (math.random() * 20 - 10) / 10)
@@ -1315,10 +1315,10 @@ function midi_callback(data)
   local msg = data[1]
   local channel = data[2]
   
-  print("msg ", msg)
-  print("channel", channel)
+  --print("msg ", msg)
+  --print("channel", channel)
   local control = data[3]
-  print("control", control)
+  --print("control", control)
   
   -- Check if the message is a control change message
   if msg == 176 and channel == 22 then
@@ -1353,6 +1353,13 @@ function midi_callback(data)
     set_level(channel-63)
   end
   
+  if msg == 176 and channel < 6 and channel > -1 then
+    print("channel", channel)
+    print("control", control)
+    track[channel-63].mute = 1
+    track[channel].level = control
+    --set_level(i)
+  end
   
 end
 
@@ -1476,8 +1483,8 @@ init = function()
     params:add_option(i.."buffer_sel", "buffer", {"main", "temp"}, 1)
     params:set_action(i.."buffer_sel", function(x) track[i].side = x - 1 set_buffer(i) end)
     -- track volume
-    params:add_control(i.."vol", "vol", controlspec.new(0, 1, 'lin', 0, 1, ""))
-    params:set_action(i.."vol", function(x) track[i].level = x set_level(i) end)
+    --params:add_control(i.."vol", "vol", controlspec.new(0, 1, 'lin', 0, 1, ""))
+    --params:set_action(i.."vol", function(x) track[i].level = x set_level(i) end)
     -- track pan
     params:add_control(i.."pan", "pan", controlspec.new(-1, 1, 'lin', 0, 0, ""))
     params:set_action(i.."pan", function(x) softcut.pan(i, x) if view < vLFO and pageNum == 1 then dirtyscreen = true end end)
@@ -2316,7 +2323,7 @@ v.redraw[vREC] = function()
 
     screen.level(sel and 15 or 4)
     screen.move(10, 32)
-    screen.text(params:string(focus.."vol"))
+    --screen.text(params:string(focus.."vol"))
     screen.move(70, 32)
     screen.text(params:string(focus.."pan"))
     screen.move(10, 40)
