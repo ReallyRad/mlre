@@ -882,9 +882,13 @@ function retrig() -- retrig function for playing tracks
 end
 
 function clear_loop(i)
+  -- clear loop
   track[i].loop = 0
   softcut.loop_start(i, clip[track[i].clip].s)
   softcut.loop_end(i, clip[track[i].clip].e)
+  -- reset keylogic
+  held[i + 1] = 1
+  heldmax[i + 1] = 0
 end
 
 
@@ -2518,7 +2522,6 @@ v.gridkey[vREC] = function(x, y, z)
       if alt == 1 then
         clear_loop(focus)
       elseif alt2 == 1 then -- "hold mode" as on cut page
-        heldmax[row] = x
         e = {}
         e.t = eLOOP
         e.i = i
@@ -2922,7 +2925,6 @@ v.gridkey[vCUT] = function(x, y, z)
       if alt == 1 and y < 8 then
         toggle_playback(i)
       elseif alt2 == 1 and y < 8 then -- "hold mode"
-        heldmax[y] = x
         e = {}
         e.t = eLOOP
         e.i = i
@@ -3028,7 +3030,6 @@ v.gridkey[vTRSP] = function(x, y, z)
       if alt2 == 1 then 
         clear_loop(focus)
       elseif alt2 == 1 then -- "hold" mode as on cut page
-        heldmax[row] = x
         e = {}
         e.t = eLOOP
         e.i = i
