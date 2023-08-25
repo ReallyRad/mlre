@@ -14,8 +14,8 @@
 --
 
 --- failstate @dan_derks
-if tonumber(norns.version.update) < 220802 then
-  norns.script.clear()
+if tonumber(norns.version.update) < 220802 then 
+  norns.script.clear() 
   norns.script.load('code/mlre/lib/fail_state.lua')
 end
 
@@ -1785,9 +1785,13 @@ function init()
     -- track volume
     params:add_control(i.."vol", "vol", controlspec.new(0, 1, 'lin', 0, 1, ""), function(param) return (round_form(param:get() * 100, 1, "%")) end)
     params:set_action(i.."vol", function(x) track[i].level = x set_level(i) end)
+    params:set_save(i.."vol", false)
+
     -- track pan
     params:add_control(i.."pan", "pan", controlspec.new(-1, 1, 'lin', 0, 0, ""), function(param) return pan_display(param:get()) end)
     params:set_action(i.."pan", function(x) softcut.pan(i, x) if view < vLFO and main_pageNum == 1 then dirtyscreen = true end end)
+    params:set_save(i.."pan", false)
+
     -- record level
     params:add_control(i.."rec", "rec", controlspec.new(0, 1, 'lin', 0, 1, ""), function(param) return (round_form(param:get() * 100, 1, "%")) end)
     params:set_action(i.."rec", function(x) track[i].rec_level = x set_rec(i) end)
@@ -1820,9 +1824,13 @@ function init()
     -- cutoff
     params:add_control(i.."cutoff", "cutoff", controlspec.new(20, 18000, 'exp', 1, 18000, "Hz"))
     params:set_action(i.."cutoff", function(x) softcut.post_filter_fc(i, x) if view < vLFO and main_pageNum == 2 then dirtyscreen = true end end)
+    params:set_save(i.."cutoff", false)
+
     -- filter q
     params:add_control(i.."filter_q", "filter q", controlspec.new(0.1, 4.0, 'exp', 0.01, 2.0, ""))
     params:set_action(i.."filter_q", function(x) softcut.post_filter_rq(i, x) if view < vLFO and main_pageNum == 2 then dirtyscreen = true end end)
+    params:set_save(i.."filter_q", false)
+
     -- filter type
     params:add_option(i.."filter_type", "type", {"low pass", "high pass", "band pass", "band reject", "off"}, 1)
     params:set_action(i.."filter_type", function(option) filter_select(i, option) end)
