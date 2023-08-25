@@ -1625,6 +1625,44 @@ function send_trig(i)
   end
 end
 
+function map_range(value, in_min, in_max, out_min, out_max)
+  return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+end
+
+-- hardcode midi filter control
+function midi_callback(data)
+  -- Extract the MIDI message and channel
+  local msg = data[1]
+  local channel = data[2]
+  
+  -- Check if the message is a control change message
+  if msg == 176 and channel == 22 then
+    
+    -- Extract the control number and value
+    local control = data[3]
+    local value = data[4]
+
+    --print ("control : ")
+    --print (control)
+
+    -- filter sweeps are only for tracks 3 to 6
+    for i = 3, 6 do 
+      -- Set the value of the cutoff parameter
+      params:set(i.."cutoff", map_range(control, 0, 127, 20, 18000))
+      softcut.post_filter_fc(i, map_range(control, 0, 127, 20, 18000))
+      
+      params:set(i.."filter_q", map_range(control, 127, 0, 4, 0.1))
+      softcut.post_filter_rq(i, map_range(control, 127, 0, 4, 0.1))
+      
+      dirtyscreen = true
+    end
+    
+  end
+end
+
+-- Set the MIDI callback function
+m.event = midi_callback
+
 
 -- init
 function init()
@@ -1822,13 +1860,13 @@ function init()
     -- filter params
     params:add_separator("filter_params"..i, "track "..i.." filter")
     -- cutoff
-    params:add_control(i.."cutoff", "cutoff", controlspec.new(20, 18000, 'exp', 1, 18000, "Hz"))
-    params:set_action(i.."cutoff", function(x) softcut.post_filter_fc(i, x) if view < vLFO and main_pageNum == 2 then dirtyscreen = true end end)
+    params:add_control(i.."cutoff", "cutoff", controlspec.new(100, 22000, 'exp', 1, 22000, "Hz"))
+    --params:set_action(i.."cutoff", function(x) softcut.post_filter_fc(i, x) if view < vLFO and main_pageNum == 2 then dirtyscreen = true end end)
     params:set_save(i.."cutoff", false)
 
     -- filter q
     params:add_control(i.."filter_q", "filter q", controlspec.new(0.1, 4.0, 'exp', 0.01, 2.0, ""))
-    params:set_action(i.."filter_q", function(x) softcut.post_filter_rq(i, x) if view < vLFO and main_pageNum == 2 then dirtyscreen = true end end)
+    --params:set_action(i.."filter_q", function(x) softcut.post_filter_rq(i, x) if view < vLFO and main_pageNum == 2 then dirtyscreen = true end end)
     params:set_save(i.."filter_q", false)
 
     -- filter type
