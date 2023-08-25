@@ -1,0 +1,11 @@
+implement : 
+- figure out which params to be saved in presets
+- disable preset saving for volume, filter status, mute status, pan, cutoff, filter_q
+- re do LP mapping for all but bass + drum with inverse q 
+- make HP mapping for bass + drum
+- make pan save 
+- show track volume on track
+- lower light level for muted track
+- disable soft cut on audio trigger
+- add mute groups and remove macro slots
+- add loop clear key combo
