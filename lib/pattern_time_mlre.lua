@@ -25,7 +25,7 @@ function pattern.new(id)
   i.step = 0
   i.time_factor = 1
   i.clock_tick = 0
-  i.synced = true
+  i.synced = false
   i.sync_meter = 4/4
   i.sync_beatnum = 16
   i.sync_clock = nil
