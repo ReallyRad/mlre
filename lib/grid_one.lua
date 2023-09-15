@@ -411,11 +411,11 @@ function grd_one.cut_draw()
   for i = 1, 6 do
     if track[i].loop == 1 then
       for x = math.floor(track[i].loop_start), math.ceil(track[i].loop_end) do
-        g:led(x, i + 1, 4)
+        g:led(x, i + 1, 1)
       end
     end
     if track[i].play == 1 then
-      g:led(track[i].pos_grid, i + 1, track_focus == i and 15 or 10)
+      g:led(track[i].pos_grid, i + 1, track[i].mute == 1 and 3 or 15)
     end
   end
   g:led(8, 8, 6)
