@@ -1858,6 +1858,12 @@ function init()
     -- mute
     params:add_binary(i.."track_mute", "mute", "trigger", 0)
     params:set_action(i.."track_mute", function() local n = 1 - track[i].mute local e = {} e.t = eMUTE e.i = i e.mute = n event(e) end)
+
+    --custom mute mapping
+    params:add_binary(i.."mute", i.."mute track", "momentary", 0)
+    params:set_action(i.."mute", function(v) e = {} e.t = eMUTE e.i = i e.mute = 1-v event(e) end)
+   
+   
     -- record enable
     params:add_binary(i.."tog_rec", "record", "trigger", 0)
     params:set_action(i.."tog_rec", function() toggle_rec(i) end)
@@ -3502,7 +3508,7 @@ end
 v.arcredraw[vTAPE] = function()
   arcenc.tape_draw()
 end
---
+
 ---------------------TIME TO TIDY UP A BIT-----------------------
 
 function cleanup()
