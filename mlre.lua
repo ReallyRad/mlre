@@ -1,4 +1,4 @@
--- mlre v1.5.4 @sonocircuit
+-- mlre v1.5.5 @sonocircuit
 -- llllllll.co/t/mlre
 --
 -- an adaption of
@@ -1746,12 +1746,14 @@ function load_track_tape(i)
   track[i].sel = loaded_sesh_data[i].track_sel
   track[i].fade = loaded_sesh_data[i].track_fade
   track[i].warble = loaded_sesh_data[i].track_warble
+  local e = {} e.t = eSPEED e.i = i e.speed = 0 event(e)
+  local e = {} e.t = eTRSP e.i = i e.val = 8 event(e)
+  params:set(i.."tempo_map_mode", loaded_sesh_data[i].track_tempo_map)
+  set_clip(i)
   set_rec(i)
   -- route data
   params:set(i.."send_track5", loaded_sesh_data[i].route_t5)
   params:set(i.."send_track6", loaded_sesh_data[i].route_t6)
-  -- set map mode and track clip via tempo map
-  params:set(i.."tempo_map_mode", loaded_sesh_data[i].track_tempo_map)
   -- clear temp track
   softcut.buffer_clear_region_channel(2, tape[i].s - 0.5, MAX_TAPELENGTH + TAPE_GAP, 0.01, 0)
   show_message("track loaded")
@@ -3182,18 +3184,14 @@ end
 v.key[vTAPE] = function(n, z)
   if view_presets then
     if n == 2 and z == 1 then
-      -- do nothing
+      local num = get_pset_num(pset_list[pset_focus])
+      params:read(num)
+      show_message("pset loaded")
     elseif n == 3 and z == 1 then
-      if pset_load_modes[load_mode] == "bang!" then
-        local num = get_pset_num(pset_list[pset_focus])
-        params:read(num)
-        show_message("pset loaded")
-      elseif pset_load_modes[load_mode] == "silent" then
-        local num = string.format("%0.2i", get_pset_num(pset_list[pset_focus]))
-        local pset_id = pset_list[pset_focus]
-        silent_load(num, pset_id)
-        show_message("silent load")
-      end
+      local num = string.format("%0.2i", get_pset_num(pset_list[pset_focus]))
+      local pset_id = pset_list[pset_focus]
+      silent_load(num, pset_id)
+      show_message("silent load")
     end
   elseif view_track_send then
     -- do nothing
@@ -3266,7 +3264,7 @@ v.enc[vTAPE] = function(n, d)
     if n == 2 then
       pset_focus = util.clamp(pset_focus + d, 1, #pset_list)
     elseif n == 3 then
-      load_mode = util.clamp(load_mode + d, 1, 3)
+      pset_focus = util.clamp(pset_focus + d, 1, #pset_list)
     end
   elseif view_track_send then
     if n == 2 and sends_focus < 5 then
@@ -3332,15 +3330,12 @@ v.redraw[vTAPE] = function()
     screen.line_rel(120, 0)
     screen.stroke()
     -- actions
-    screen.level(15)
+    screen.level(16 - pulse_key_slow)
     screen.move(4, 60)
-    screen.text("MODE:")
-    screen.level(4)
-    screen.move(64, 60)
-    screen.text_center(pset_load_modes[load_mode])
+    screen.text(">bang!<")
     screen.level(pulse_key_slow)
     screen.move(124, 60)
-    screen.text_right(">LOAD<")
+    screen.text_right(">silent<")
 
   elseif view_track_send then
     screen.level(15)
@@ -3507,7 +3502,7 @@ end
 v.arcredraw[vTAPE] = function()
   arcenc.tape_draw()
 end
-
+--
 ---------------------TIME TO TIDY UP A BIT-----------------------
 
 function cleanup()
