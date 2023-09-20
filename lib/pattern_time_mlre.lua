@@ -236,6 +236,17 @@ function pattern:next_event()
     self.process(self.event[self.step])
     self.metro.time = self.time[self.step] * self.time_factor
     self.metro:start()
+
+    self.flash = true
+    dirtygrid = true
+    clock.run(
+      function()
+        clock.sleep(0.1)
+        self.flash = false
+        dirtygrid = true
+      end
+    )
+
   end
 end
 
