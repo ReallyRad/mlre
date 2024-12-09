@@ -2126,6 +2126,53 @@ function load_track_tape(i)
   show_message("track  "..i.."   loaded")
 end
 
+function map_range(value, in_min, in_max, out_min, out_max)
+  return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+end
+
+function tension(value, k)
+  return (math.exp(k * value) - 1) / (math.exp(k) - 1)
+end
+
+function map_tension_range(value, k, in_min, in_max, out_min, out_max)
+  return map_range(1.0 - tension(map_range(value, in_min, in_max, 1.0, 0.0), k), 0.0, 1.0, out_min, out_max)
+end
+
+-- hardcode midi filter control
+function midi_callback(data)
+  -- Extract the MIDI message and channel
+  local msg = data[1]
+  local channel = data[2]
+  
+  -- Check if the message is a control change message
+  if msg == 176 and channel == 22 then
+    
+    -- Extract the control number and value
+    local control = data[3]
+    local value = data[4]
+
+    --print ("control : ")
+    --print (control)
+
+    -- filter sweeps are only for tracks 3 to 6
+    for i = 3, 6 do 
+      -- Set the value of the cutoff parameter
+      params:set(i.."cutoff", map_tension_range(control, -3.1, 0, 127, 20, 22000))
+      softcut.post_filter_fc(i, map_tension_range(control, -3.1, 0, 127, 20, 22000))
+      
+      params:set(i.."filter_q", map_range(control, 127, 0, 4, 0.1))
+      softcut.post_filter_rq(i, map_range(control, 127, 0, 4, 0.1))
+      
+      dirtyscreen = true
+    end
+    
+  end
+end
+
+-- Set the MIDI callback function
+m.event = midi_callback
+
+
 
 --------------------- INIIIIIIIT -----------------------
 function init()
@@ -2374,6 +2421,10 @@ function init()
     params:set_action(i.."track_mute", function()
       local n = 1 - track[i].mute
       local e = {} e.t = eMUTE e.i = i e.mute = n event(e) end)
+    --custom mute mapping
+    params:add_binary(i.."mute", i.."mute track", "momentary", 0)
+    params:set_action(i.."mute", function(v) e = {} e.t = eMUTE e.i = i e.mute = 1-v event(e) end)
+
     -- record enable
     params:add_binary(i.."tog_rec", "record", "trigger", 0)
     params:set_action(i.."tog_rec", function() toggle_rec(i) end)
@@ -2532,10 +2583,10 @@ function init()
     params:add_separator("track_filter_params"..i, "track "..i.." filter")
     -- cutoff
     params:add_control(i.."cutoff", "cutoff", controlspec.new(20, 18000, 'exp', 1, 18000, ""), function(param) return (round_form(param:get(), 1, " hz")) end)
-    params:set_action(i.."cutoff", function(x) softcut.post_filter_fc(i, x) page_redraw(vMAIN, 3) end)
+    --params:set_action(i.."cutoff", function(x) softcut.post_filter_fc(i, x) page_redraw(vMAIN, 3) end)
     -- filter q
     params:add_control(i.."filter_q", "filter q", controlspec.new(0.1, 4.0, 'exp', 0.01, 2.0, ""))
-    params:set_action(i.."filter_q", function(x) softcut.post_filter_rq(i, x) page_redraw(vMAIN, 3) end)
+    -- params:set_action(i.."filter_q", function(x) softcut.post_filter_rq(i, x) page_redraw(vMAIN, 3) end)
     -- filter type
     params:add_option(i.."filter_type", "type", {"lp", "hp", "bp", "br", "off"}, 1)
     params:set_action(i.."filter_type", function(option) filter_select(i, option) page_redraw(vMAIN, 4) end)
